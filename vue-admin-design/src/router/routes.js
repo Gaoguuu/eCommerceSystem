@@ -14,21 +14,29 @@ export const asyncRoutes = [
     path: '/mrp-count',
     name: 'mrpCount',
     component: Layout,
-    redirect: '/mrpCount/mrpCount',
+    redirect: '/mrpCount/mrp-count',
     meta: {
       title: 'MRP计算',
       icon: 'vue-dsn-icon-biaoge'
     },
-    children: [{
-      path: '/mrp-count',
-      name: 'mrpCount',
-      component: () => import('../views/mrpCount/mrpCount'),
-      meta: {
-        title: 'mrp计算',
-        icon: 'vue-dsn-icon-index',
-        fixed: true
-      }
-    }]
+    children: [
+      {
+        path: '/mrp-count',
+        name: 'mrpCount',
+        component: () => import('../views/mrpCount/mrpCount'),
+        meta: {
+          title: 'mrp计算',
+        }
+      },
+      {
+        path: '/mrp-list',
+        name: 'mrpList',
+        component: () => import('../views/mrpCount/mrpList'),
+        meta: {
+          title: 'mrp列表'
+        }
+      },
+    ]
   },
   {
     path: '/form-table',

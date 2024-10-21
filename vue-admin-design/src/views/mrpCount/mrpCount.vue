@@ -7,6 +7,7 @@
         <p>地址：访问 <el-link type="success" href="https://element.eleme.cn/2.13/#/zh-CN/component/form" target="_blank">element-Form</el-link></p>
       </template>
     </Hints>
+
     <el-card shadow="always">
       <el-form ref="ruleForm" :model="ruleForm" :rules="rules" label-width="230px" class="form-list">
         <el-form-item label="输入框（长度限制）：" prop="inputLimit">
