@@ -193,7 +193,7 @@
 </template>
 
 <script>
-import { getTableList } from '@/api'
+import { getTableList,mrpOpera  } from '@/api'
 import excel from '@/utils/excel'
 import Pagination from '@/components/Pagination'
 import Upload from '@/components/Upload'
@@ -334,7 +334,7 @@ export default {
       console.log(this.arrayQuery)
     },
     onSubmit() {
-      this.listQuery.currentPage = 1
+      // this.listQuery.currentPage = 1
       this.fetchData()
     },
     // 导入数据

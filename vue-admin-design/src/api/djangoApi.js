@@ -4,6 +4,3 @@
  */
 import axios from "axios";
 
-export const mrpOpera = data => {
-  return axios.post("/api/mrp", data).then(res => res.data);
-};

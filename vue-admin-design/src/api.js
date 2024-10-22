@@ -7,3 +7,6 @@ export function getTableList(param) {
     param
   })
 }
+export const mrpOpera = data => {
+  return axios.post("/api/mrp", data).then(res => res.data);
+};
