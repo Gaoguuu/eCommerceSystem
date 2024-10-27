@@ -27,7 +27,7 @@
           <el-input v-model="listQuery.matName" placeholder="产品名称" />
         </el-form-item>
         <el-form-item label="产品数量">
-          <el-input v-model="listQuery.matNumber" placeholder="产品数量" />
+          <el-input v-model.number="listQuery.matNumber" placeholder="产品数量" />
         </el-form-item>        
         <el-form-item label="完工日期">
           <!-- <el-input v-model="listQuery.phone" placeholder="完工日期" /> -->
@@ -67,22 +67,20 @@
 
       <!-- 表格栏 -->
       <el-table
-        ref="multipleTable"
         v-loading="listLoading"
         :data="tableData"
         tooltip-effect="dark"
         style="width: 100%"
         size="medium"
-        @selection-change="handleSelectionChange"
+
       >
         <el-table-column type="selection" width="60" />
-        <el-table-column prop="id" label="编号" align="center" width="120" sortable />
         <el-table-column prop="name" label="产品名称" align="center">
           <template slot-scope="scope">
             <el-popover trigger="hover" placement="top">
               <p>编号: {{ scope.row.name }}</p>
-              <p>货物数量: {{ scope.row.phone }}</p>
-              <p>完成日期: {{ scope.row.hobby }}</p>
+              <p>货物数量: {{ scope.row.number }}</p>
+              <p>完成日期: {{ scope.row.comdate }}</p>
               <div slot="reference">
                 <el-tag size="medium">{{ scope.row.name }}</el-tag>
               </div>
@@ -90,26 +88,32 @@
           </template>
         </el-table-column>
         <el-table-column label="生产方式" align="center">
-          <template slot-scope="scope">{{ scope.row.sex }}</template>
+          <template slot-scope="scope">{{ scope.row.pro }}</template>
         </el-table-column>
-        <el-table-column prop="phone" label="数量" align="center" />
-        <el-table-column prop="education" label="下达日期" align="center" />
-        <el-table-column prop="education" label="完成日期" align="center" />v
+        <el-table-column prop="phone" label="数量" align="center">
+          <template slot-scope="scope">{{ scope.row.number }}</template>
+        </el-table-column>
+        <el-table-column prop="education" label="下达日期" align="center">
+          <template slot-scope="scope">{{ scope.row.predate }}</template>
+        </el-table-column>
+        <el-table-column prop="education" label="完成日期" align="center">
+          <template slot-scope="scope">{{ scope.row.comdate }}</template>
+        </el-table-column>
 
-        <el-table-column label="禁止编辑" align="center">
+        <!-- <el-table-column label="禁止编辑" align="center">
           <template slot-scope="scope">
             <el-switch v-model="scope.row.forbid" @change="stateChange(scope.row)" />
           </template>
-        </el-table-column>
-        <el-table-column label="操作" align="center" width="200">
+        </el-table-column> -->
+        <!-- <el-table-column label="操作" align="center" width="200">
           <template slot-scope="scope">
             <el-button size="mini" :disabled="scope.row.forbid" @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
             <el-button size="mini" type="danger" @click="handleDelete(scope.$index, scope.row)">删除</el-button>
           </template>
-        </el-table-column>
+        </el-table-column> -->
       </el-table>
       <!-- 分页栏 -->
-      <Pagination :total="total" :page.sync="listQuery.currentPage" :limit.sync="listQuery.pageSize" @pagination="fetchData" />
+      <!-- <Pagination :total="total" :page.sync="listQuery.currentPage" :limit.sync="listQuery.pageSize" @pagination="fetchData" /> -->
       <!-- 新增/编辑 弹出栏 -->
       <el-dialog
         title="编辑"
@@ -317,12 +321,17 @@ export default {
     fetchData() {
       this.listLoading = true
       // 获取数据列表接口
-      getTableList(this.listQuery).then(res => {
-        const data = res.data
-        if (data.code === 0) {
-          this.total = data.data.total
-          this.tableData = data.data.list
+      mrpOpera ({
+        opera_type:'get_question_list',
+        mrpList:this.arrayQuery
+      }).then(res => {
+        console.log(res)
+        if (1) {
+          this.total = res.total
+          this.tableData = res.erpList
+          console.log(this.tableData)
           this.listLoading = false
+          
         }
       }).catch(() => {
         this.listLoading = false
@@ -330,8 +339,13 @@ export default {
     },
     // 查询数据
     onAdd(){
-      this.arrayQuery.push({ ...this.listQuery });
+      const formattedQuery = {
+      ...this.listQuery,
+      matNumber: Number(this.listQuery.matNumber), // 转换为数字类型 
+  };
+      this.arrayQuery.push(formattedQuery);
       console.log(this.arrayQuery)
+      
     },
     onSubmit() {
       // this.listQuery.currentPage = 1

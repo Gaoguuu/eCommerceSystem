@@ -4,8 +4,9 @@ from rest_framework.decorators import api_view
 from .models import *
 import datetime
 import math
-from queue import LifoQueue
+from queue import LifoQueue, Queue
 import heapq
+from django.db.models import Q
 
 
 @api_view(["POST"])
@@ -14,24 +15,25 @@ def opera(request):
     body = str(request.body, encoding="utf-8")
     try:
         info = json.loads(body)  # 解析json报文
-
     except:
         response["code"] = "-2"
         response["msg"] = "请求格式有误"
     opera_type = info.get("opera_type")  # 获取操作类型
     if opera_type:
-        if opera_type == "get_info":  # 获取问卷信息
-            response = getInfo(info, request)
+        if opera_type == "get_question_list":
+            # 获取问卷信息
+            response = show(info, request)
         else:
             response["code"] = "-7"
             response["msg"] = "请求类型有误"
     else:
         response["code"] = "-3"
         response["msg"] = "确少必要参数"
+    print(response)
+    return Response(response)
 
-    return Response(json.dumps(response))
 
-
+# 定义树节点
 class TreeNode:
     def __init__(self, name, pro, number, predate, comdate):
         self.name = name
@@ -41,27 +43,39 @@ class TreeNode:
         self.comdate = comdate
         self.chilist = []
 
+    # 将节点转换为字典形式
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "pro": self.pro,
+            "number": self.number,
+            "predate": str(self.predate),  # 转换为字符串，避免 datetime 序列化问题
+            "comdate": str(self.comdate),
+            "childlist": [child.to_dict() for child in self.chilist],
+        }
+
 
 # def getQuery(arrayQuery):
 #     global Tree_list
 
 
+# 创建树根节点
 def CreateRoot(MatNeed):
-    name = MatNeed.name
+    name = MatNeed["matName"]
     pro = (Material.objects.filter(MatName=name).first()).MatPro
-    number = MatNeed.number
-    comdate = MatNeed.date
+    number = MatNeed["matNumber"]
+    comdate = MatNeed["data"]
     zday = 0
     tday = 0
     if pro == "生产":
         zday = (Material.objects.filter(MatName=name).first()).MatPre
     else:
-        tday = (ALLO.objects.filter(ChiName=name).first()).MatPre + (
-            ALLO.objects.filter(ChiName=name).first()
+        tday = (Allo.objects.filter(ChiName=name).first()).MatPre + (
+            Allo.objects.filter(ChiName=name).first()
         ).ShoPre
     pday = zday + tday
     # 完成日期
-    b = datetime.datetime.strptime(MatNeed.date, "%Y-%m-%d")
+    b = datetime.datetime.strptime(MatNeed["data"], "%Y-%m-%d")
     # 下达日期
     predate = datetime.datetime.strftime(
         (b - datetime.timedelta(days=pday)), "%Y-%m-%d"
@@ -70,26 +84,31 @@ def CreateRoot(MatNeed):
     return root
 
 
+# 进行深度搜索
 def DFS(Nod):
     Nod.chilist.clear()
-    ChiM = ALLO.objects.filter(ParName=Nod.name)
+    ChiM = Allo.objects.filter(ParName=Nod.name)
     if len(ChiM) > 0:
         for i in range(0, len(ChiM)):
             name = ChiM[i].ChiName
             maLos = ((Material.objects.filter(MatName=name)).first()).MatLos
-            num = math.ceil((ChiM[i].ConNum * Nod.number / (1 - maLos)))
+            # print(f"Nod.number: {Nod.number}, type: {type(Nod.number)}")
+            # print(f"maLos: {maLos}, type: {type(maLos)}")
+
+            num = math.ceil((ChiM[i].ConnNum * Nod.number / (1 - maLos)))
             # num = ChiM[i].ConNum * Nod.number
             comday = Nod.predate
+            # date_obj = datetime.strptime(comday, "%Y-%m-%d").date()
             pro = (Material.objects.filter(MatName=name).first()).MatPro
             zday = 0
             tday = 0
             if pro == "生产":
                 zday = (Material.objects.filter(MatName=name).first()).MatPre
             else:
-                tday = (ALLO.objects.filter(ChiName=name).first()).MatPre + (
-                    ALLO.objects.filter(ChiName=name).first()
+                tday = (Allo.objects.filter(ChiName=name).first()).MatPre + (
+                    Allo.objects.filter(ChiName=name).first()
                 ).ShoPre
-                pday = zday + tday
+            pday = zday + tday
             b = datetime.datetime.strptime(comday, "%Y-%m-%d")
             predate = datetime.datetime.strftime(
                 (b - datetime.timedelta(days=pday)), "%Y-%m-%d"
@@ -129,14 +148,14 @@ def DFS(Nod):
 #     return index_of_min
 
 
+# 查询并清空库存
 def CLStore():
     # 从 Store 表中过滤数据并按 'MatID' 排序
     obj = Store.objects.filter(Q(MatPre__gt=0) | Q(MatRem__gt=0)).order_by("MatID")
-    # 初始化优先队列
-    priority_queue = []
     for i in range(0, len(obj)):
+        # 初始化优先队列
+        priority_queue = []
         name = obj[i].MatName
-        print(name)
         p = LifoQueue()
         for j in range(0, len(Tree_list)):
             p.put(Tree_list[j])
@@ -184,13 +203,17 @@ def CLStore():
     return None
 
 
-def show(request):
-    if request.method == "GET":
+# 入口函数
+def show(info, request):
+    mrpList = info.get("mrpList")
+    response = {"code": 0, "msg": "success"}
+    data = {}
+    if 1 == 1:
         global Tree_list
         Tree_list = []
         ERP_list = []
-        for i in range(0, len(Need_list)):
-            root = CreateRoot(Need_list[i])
+        for i in range(0, len(mrpList)):
+            root = CreateRoot(mrpList[i])
             Tree_list.append(root)
             DFS(root)
         CLStore()  # 调用 CLStore 函数，处理树结构中的节点
@@ -208,15 +231,13 @@ def show(request):
                         Need
                     )  # 如果该节点的 number 不为0，添加到 ERP_list 中
 
-                if len(Need.childlist) != 0:
-                    for i in range(0, len(Need.childlist)):
-                        q.put(Need.childlist[i])  # 将子节点加入队列
+                if len(Need.chilist) != 0:
+                    for i in range(0, len(Need.chilist)):
+                        q.put(Need.chilist[i])  # 将子节点加入队列
 
         # 排序 ERP_list，按 predete 属性排序
         ERP_list.sort(key=lambda TreeNode: TreeNode.predate)
+        response["erpList"] = [node.to_dict() for node in ERP_list]
+        response["total"] = len(response["erpList"])
 
-        return render(
-            request, "show.html", {"Need_list": Need_list, "ERP_list": ERP_list}
-        )
-
-    return redirect("http://127.0.0.1:8000/home/")
+    return response
