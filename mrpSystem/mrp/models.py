@@ -36,3 +36,24 @@ class Allo(models.Model):
     ConnNum = models.IntegerField(verbose_name="子物料数量")
     MatPre = models.IntegerField(verbose_name="物料提前期")
     ShoPre = models.IntegerField(verbose_name="供应商提前期")
+
+
+class User(models.Model):
+    userId = models.CharField(max_length=30)
+    username = models.CharField(max_length=30)
+
+
+class Order(models.Model):
+    OrderNum = models.CharField(verbose_name="订单编号", max_length=10)
+    GoodsNum = models.CharField(verbose_name="货品编号", max_length=10)
+    userId = models.CharField(verbose_name="用户ID", max_length=30)
+
+
+class Product(models.Model):
+    GoodsNum = models.CharField(verbose_name="货品编号", max_length=10)
+    img = models.CharField(max_length=255)  # 存放图片路径
+    price = models.DecimalField(max_digits=10, decimal_places=2)  # 存放价格，支持小数
+    intro = models.TextField()  # 产品描述
+    remarks = models.IntegerField()  # 评论数
+    shop_name = models.CharField(max_length=100)  # 商店名称
+    sale = models.IntegerField()  # 销量

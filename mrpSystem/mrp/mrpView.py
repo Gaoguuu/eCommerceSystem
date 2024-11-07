@@ -23,6 +23,8 @@ def opera(request):
         if opera_type == "get_question_list":
             # 获取问卷信息
             response = show(info, request)
+        if opera_type == "get_recommend":
+            response = getRecommend(info)
         else:
             response["code"] = "-7"
             response["msg"] = "请求类型有误"
@@ -119,35 +121,6 @@ def DFS(Nod):
     return None
 
 
-# def EnsureTree(name):
-#     q = LifoQueue()
-#     index_of_min = 0
-#     date = datetime.date.today()
-#     mindate = datetime.date.today()
-
-#     for i in range(0, len(Tree_list)):
-#         q.put(Tree_list[i])
-
-#         while q.empty() != True:
-#             node = q.get()
-
-#             if node.name == name:
-#                 date = node.predate
-
-#                 # 更新最小日期
-#                 if mindate.__ge__(date):
-#                     mindate = date
-#                     index_of_min = i
-
-#             if len(node.chilist) != 0:
-#                 for i in range(len(node.chilist) - 1, -1, -1):
-#                     q.put(node.chilist[i])
-#             # else:
-#             #     continue
-
-#     return index_of_min
-
-
 # 查询并清空库存
 def CLStore():
     # 从 Store 表中过滤数据并按 'MatID' 排序
@@ -184,22 +157,6 @@ def CLStore():
                 sremain = sremain - node.number
                 node.number = 0
                 DFS(node)
-
-                # 再次遍历树，直到队列为空
-                # while not q.empty():
-                #     n_node = q.get()
-                #     if n_node.name == name:
-                #         sremain = sremain - n_node.number
-                #         n_node.number = 0
-                #         DFS(n_node)
-                # q.put(Tree_List[len(Tree_List) - index - 1])
-                # continue
-
-            # if len(node.childlist) != 0:
-            #     for i in range(len(node.childlist) - 1, -1, -1):
-            #         q.put(node.childlist[i])
-            # else:
-            #     continue
     return None
 
 
@@ -239,5 +196,11 @@ def show(info, request):
         ERP_list.sort(key=lambda TreeNode: TreeNode.predate)
         response["erpList"] = [node.to_dict() for node in ERP_list]
         response["total"] = len(response["erpList"])
+
+    return response
+
+
+def getRecommend():
+    response = {"code": 0, "msg": "success"}
 
     return response
